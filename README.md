@@ -19,12 +19,11 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
 - css_getserverinfo - Force sending new data into json file.
 
 ## Installation:
-
 ### Server:
-Upload plugin files into *addons/counterstrikesharp/plugins/*,
-Restart the server,
-After restarting the server, config file should be created at *addons/counterstrikesharp/configs/plugins/ServerInfo*
-
+    - Upload plugin files into *addons/counterstrikesharp/plugins/*,
+    - Restart the server,
+    - After restarting the server, config file should be created at *addons/counterstrikesharp/configs/plugins/ServerInfo*
+    - Restart server again or reload the plugin
 
 ### Website module:
     - Download module from Stellar Team discord,
