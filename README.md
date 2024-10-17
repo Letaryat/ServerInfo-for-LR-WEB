@@ -2,7 +2,7 @@
 > [!IMPORTANT]
 > This plugin was made by [Stimayk](https://github.com/Stimayk/ServerInfo-for-LR-WEB). This is a fork of this plugin where I recompiled it to the newest versions of packages that it was using and did some changes and "repair" some stuff that made this plugin more up to date.
 # EN:
-This plugin insert data into .json file that is in Rich-Monitoring module created for Level Ranks Web with Rich theme. This allow to see player statistics on website before entering the server. It works fine with [CS2-Ranks by partiusfabaa (v2.0.5.2)](https://github.com/partiusfabaa/cs2-ranks), I did not tested it with other plugins such as ABKAM2023 RankPoints or Metamod Level ranks by Pisex. It updates data on round start or by changing Monitoring module to send css_getserverinfo via RCON. 
+This plugin inserts data into .json file that is in Rich-Monitoring module created for Level Ranks Web with Rich theme. This allow to see player statistics on website before entering the server. It works fine with [CS2-Ranks by partiusfabaa (v2.0.5.2)](https://github.com/partiusfabaa/cs2-ranks), I did not tested it with other plugins such as ABKAM2023 RankPoints or Metamod Level ranks by Pisex. It updates data on round start or by changing Monitoring module to send css_getserverinfo via RCON. 
 Since I don't know what I am doing here and just made rookie stuff mostly copying and pasting code I probably won't be doing much updates to it. I think it works pretty well.
 
 <details> 
