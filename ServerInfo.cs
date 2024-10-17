@@ -58,17 +58,13 @@ namespace ServerInfo
         Url = config.url;
         statisticType = config.statistic_type;
         isDebugMode = config.debug_mode;
-        // Once we've validated the config, we can set it to the instance
-        //Config = config;
+
     }
 
         public override void Load(bool hotReload)
         {
-            //LoadCfg();
-            Console.WriteLine("Sprawdzanie configu: " + Server + " " + Password + " " + Url + " " + statisticType + isDebugMode);
             GetIP();
             AddServerInfoCommands();
-
             RegisterClientAuthListener();
         }
 
@@ -76,9 +72,6 @@ namespace ServerInfo
         {
             AddCommand("css_getserverinfo", "Get server info",
                 (player, info) => Task.Run(async () => await UpdatePlayerInfoAsync()));
-
-            //AddCommand("css_reloadserverinfo", "Forced to read the cfg",
-            //    (player, info) => OnConfigParsed());
         }
 
         private void RegisterClientAuthListener()
