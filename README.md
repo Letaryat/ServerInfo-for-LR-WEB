@@ -34,6 +34,7 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
     "ConfigVersion": 1 // <- Better not to touch :3
     }
 ```
+- For correct rank and in real time players information displaying server hibernation should be at false (0),
 - Restart server again or reload the plugin
 
 ## Website module:
