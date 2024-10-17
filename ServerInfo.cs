@@ -63,7 +63,7 @@ namespace ServerInfo
 
         public override void Load(bool hotReload)
         {
-            //RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+            RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
             //RegisterEventHandler<EventCsWinPanelMatch>(OnMapEnd);
             GetIP();
             AddServerInfoCommands();
