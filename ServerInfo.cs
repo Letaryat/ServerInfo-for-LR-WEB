@@ -28,7 +28,7 @@ namespace ServerInfo
         public override string ModuleName => "ServerInfo for LR WEB";
         public override string ModuleAuthor => "E!N // Little edit: Letaryat";
         public override string ModuleVersion => "1.6";
-        public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (Invite does not work)";
+        public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (Invite does not work but probably it was Stellar Team)";
 
         public ServerInfoConfig Config { get; set; }
 
