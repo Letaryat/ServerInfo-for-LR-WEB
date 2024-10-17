@@ -42,12 +42,10 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
 - Go to /forward/js_controller.php and change password on the line 5 ($password == "some russian stuff (change to the password you have given in plugin config)")
 - If in module folder, folder named "servers" is absent, create one,
 - Additionaly you can insert RCON password to the database where you have given your server ip, name and other stuff (lvl_web_servers) and change command sending by the module in: module_block_main_monitoring_rating/ext/js_controller.php
-
+```
     $_RCON->Command( "sm_getserverinfo");
-
     to:
-
     $_RCON->Command( "css_getserverinfo");
-
+```
 - Restart module in admin panel
 
