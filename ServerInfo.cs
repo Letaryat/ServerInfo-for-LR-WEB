@@ -15,9 +15,9 @@ namespace ServerInfo
     public partial class ServerInfo : BasePlugin
     {
         public override string ModuleName => "ServerInfo for LR WEB";
-        public override string ModuleAuthor => "E!N";
-        public override string ModuleVersion => "1.5";
-        public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (https://discord.com/invite/sYKAk3GCbD)";
+        public override string ModuleAuthor => "E!N // Little edit: Letaryat";
+        public override string ModuleVersion => "1.6";
+        public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (Invite does not work)";
 
         private bool isDebugMode = false;
 
@@ -81,7 +81,7 @@ namespace ServerInfo
             LogDebug($"Valid player found in slot {slot}. Proceeding with session initialization.");
             Task.Run(() =>
             {
-                CounterStrikeSharp.API.Server.NextFrame(() => InitPlayerSession(player, steamid));
+                CounterStrikeSharp.API.Server.NextFrame(() => InitPlayerSession(player!, steamid));
             });
         }
 
@@ -164,7 +164,7 @@ namespace ServerInfo
             {
                 var moduleDirectoryParent = GetParentDirectory(ModuleDirectory, "Module directory");
                 var parentDirectory = GetParentDirectory(moduleDirectoryParent.FullName, "Module directory parent");
-                return Path.Combine(parentDirectory.FullName, "configs/server_info.ini");
+                return Path.Combine(parentDirectory.FullName, "configs/plugins/ServerInfo/server_info.ini");
             }
             catch (Exception ex)
             {
@@ -503,7 +503,7 @@ namespace ServerInfo
             return type switch
             {
                 1 => Path.Combine(parentDirectory, "plugins/RanksPoints/dbconfig.json"),
-                2 => Path.Combine(parentDirectory, "plugins/Ranks/settings_ranks.json"),
+                2 => Path.Combine(parentDirectory, "configs/plugins/RanksCore/ranks.json"),
                 3 => Path.Combine(csgoDirectory, "addons/configs/databases.cfg"),
                 _ => "",
             };
@@ -527,7 +527,7 @@ namespace ServerInfo
 
             if (!IsPlayerValid(player)) return HookResult.Continue;
 
-            if (player.AuthorizedSteamID != null)
+            if (player!.AuthorizedSteamID != null)
             {
                 InitPlayerSession(player, player.AuthorizedSteamID);
             }
@@ -545,7 +545,7 @@ namespace ServerInfo
             var player = @event.Userid;
             if (!IsPlayerValid(player)) return HookResult.Continue;
 
-            PlayerList.Remove(player.Slot);
+            PlayerList.Remove(player!.Slot);
             LogDebug($"Player disconnected: {player.UserId}");
             return HookResult.Continue;
         }
@@ -668,14 +668,20 @@ namespace ServerInfo
                 return;
             }
 
+            int scoreCt = 0;
+            int scoreT = 0;
+
             if (!PlayerList.Any())
             {
                 LogDebug("No players on the server. Skipping team score retrieval and data send.");
+                (scoreCt, scoreT) = GetTeamsScore();
+                var jsonDataEmpty = new { score_ct = scoreCt, score_t = scoreT, players = playersJson ?? new List<object>() };
+                var jsonEmptyString = System.Text.Json.JsonSerializer.Serialize(jsonDataEmpty);
+                await PostData(jsonEmptyString);
+                LogDebug("Data send when server is empty: " + jsonEmptyString);
                 return;
             }
 
-            int scoreCt = 0;
-            int scoreT = 0;
             var resetEvent = new ManualResetEvent(false);
 
             await Task.Run(() => CounterStrikeSharp.API.Server.NextFrame(() =>
