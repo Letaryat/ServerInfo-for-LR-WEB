@@ -63,11 +63,16 @@ namespace ServerInfo
 
         public override void Load(bool hotReload)
         {
+            RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
             GetIP();
             AddServerInfoCommands();
             RegisterClientAuthListener();
         }
 
+        private void OnMapEnd()
+        {
+            rankCache.Clear();
+        }
         private void AddServerInfoCommands()
         {
             AddCommand("css_getserverinfo", "Get server info",
@@ -167,6 +172,7 @@ namespace ServerInfo
                 LogDebug($"Rank for {steamid} fetched from cache: {cachedRank}");
                 return cachedRank;
             }
+
 
             var dbConfig = LoadDbConfig();
             if (dbConfig == null)
@@ -438,8 +444,8 @@ namespace ServerInfo
         {
             var player = @event.Userid;
             if (!IsPlayerValid(player)) return HookResult.Continue;
-
             PlayerList.Remove(player!.Slot);
+
             LogDebug($"Player disconnected: {player.UserId}");
             return HookResult.Continue;
         }
@@ -543,6 +549,7 @@ namespace ServerInfo
         private void LogPlayerInfo(PlayerInfo playerInfo)
         {
             LogDebug($"Player info - Name: {playerInfo.Name}, SteamID: {playerInfo.SteamId}, Kills: {playerInfo.Kills}, Deaths: {playerInfo.Deaths}, Assists: {playerInfo.Assists}, Headshots: {playerInfo.Headshots}");
+
         }
 
         private static (int ctScore, int terroristScore) GetTeamsScore()
@@ -608,7 +615,7 @@ namespace ServerInfo
                 rank,
                 playtime = playTime
             };
-
+            LogDebug(">>>> Player rank: " + rank);
             return new List<object> { playerJson };
         }
 
