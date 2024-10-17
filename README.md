@@ -15,12 +15,11 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
 - CounterStrikeSharp (Tested on v279),
 - [CS2-Ranks by partiusfabaa (v2.0.5.2)](https://github.com/partiusfabaa/cs2-ranks),
 
-### Commands:
+## Commands:
 - css_getserverinfo - Force sending new data into json file.
 
-### Installation:
-<details> 
-  <summary>Server</summary>
+## Installation:
+### Server:
     - Upload plugin files into *addons/counterstrikesharp/plugins/*,
     - Restart the server,
     - After restarting the server, config file should be created at *addons/counterstrikesharp/configs/plugins/ServerInfo*
@@ -36,10 +35,8 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
     }
     ```
     - Restart server again or reload the plugin
-</details>
 
-<details> 
-  <summary>Website module</summary>
+### Website module:
     - Download module from Stellar Team discord,
     - Install it like any other module,
     - Go to /forward/js_controller.php and change password on the line 5 ($password == "some russian stuff (change to the password you have given in plugin config)")
@@ -53,7 +50,6 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
 
     $_RCON->Command( "css_getserverinfo");
     ```
-
+    
     - Restart module in admin panel
 
-</details>
