@@ -9,15 +9,28 @@ using Newtonsoft.Json.Linq;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Text.Json.Serialization;
 
 namespace ServerInfo
 {
-    public partial class ServerInfo : BasePlugin
+
+    public class ServerInfoConfig : BasePluginConfig
+    {
+        [JsonPropertyName("server_info")] public string server_info { get; set; } = "ip:port";
+        [JsonPropertyName("password")] public string password { get; set; } = "password";
+        [JsonPropertyName("url")] public string url { get; set; } = "https://website.eu";
+        [JsonPropertyName("debug_mode")] public bool debug_mode { get; set; } = false;
+        [JsonPropertyName("statistic_type")] public int statistic_type { get; set; } = 0;
+    }
+
+    public partial class ServerInfo : BasePlugin, IPluginConfig<ServerInfoConfig>
     {
         public override string ModuleName => "ServerInfo for LR WEB";
         public override string ModuleAuthor => "E!N // Little edit: Letaryat";
         public override string ModuleVersion => "1.6";
         public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (Invite does not work)";
+
+        public ServerInfoConfig Config { get; set; }
 
         private bool isDebugMode = false;
 
@@ -38,9 +51,21 @@ namespace ServerInfo
         private readonly Dictionary<string, int> rankCache = new();
         public Dictionary<int, PlayerInfo> PlayerList { get; private set; } = new Dictionary<int, PlayerInfo>();
 
+    public void OnConfigParsed(ServerInfoConfig config)
+    {
+        Server = config.server_info;
+        Password = config.password;
+        Url = config.url;
+        statisticType = config.statistic_type;
+        isDebugMode = config.debug_mode;
+        // Once we've validated the config, we can set it to the instance
+        //Config = config;
+    }
+
         public override void Load(bool hotReload)
         {
-            LoadCfg();
+            //LoadCfg();
+            Console.WriteLine("Sprawdzanie configu: " + Server + " " + Password + " " + Url + " " + statisticType + isDebugMode);
             GetIP();
             AddServerInfoCommands();
 
@@ -52,8 +77,8 @@ namespace ServerInfo
             AddCommand("css_getserverinfo", "Get server info",
                 (player, info) => Task.Run(async () => await UpdatePlayerInfoAsync()));
 
-            AddCommand("css_reloadserverinfo", "Forced to read the cfg",
-                (player, info) => LoadCfg());
+            //AddCommand("css_reloadserverinfo", "Forced to read the cfg",
+            //    (player, info) => OnConfigParsed());
         }
 
         private void RegisterClientAuthListener()
@@ -110,130 +135,6 @@ namespace ServerInfo
                 UpdatePlayerStats(player, playerInfo);
                 LogDebug($"Updated PlayerInfo for {player.PlayerName}");
             }
-        }
-
-        private void LoadCfg()
-        {
-            try
-            {
-                var filePath = GetConfigFilePath();
-                if (CheckConfigFileExists(filePath))
-                {
-                    ParseAndLoadConfig(filePath);
-                }
-                else
-                {
-                    LogConfigFileNotFound();
-                }
-            }
-            catch (Exception ex)
-            {
-                LogConfigLoadError(ex);
-            }
-        }
-
-        private bool CheckConfigFileExists(string filePath)
-        {
-            if (!File.Exists(filePath))
-            {
-                Console.WriteLine("Config file not found.");
-                return false;
-            }
-            return true;
-        }
-
-        private void ParseAndLoadConfig(string filePath)
-        {
-            ParseConfigFile(filePath);
-            LogDebug("Configuration loaded successfully.");
-        }
-
-        private void LogConfigFileNotFound()
-        {
-            LogDebug("Configuration file not found.");
-        }
-
-        private void LogConfigLoadError(Exception ex)
-        {
-            LogDebug($"Error loading configuration: {ex.Message}");
-        }
-
-        private string GetConfigFilePath()
-        {
-            try
-            {
-                var moduleDirectoryParent = GetParentDirectory(ModuleDirectory, "Module directory");
-                var parentDirectory = GetParentDirectory(moduleDirectoryParent.FullName, "Module directory parent");
-                return Path.Combine(parentDirectory.FullName, "configs/plugins/ServerInfo/server_info.ini");
-            }
-            catch (Exception ex)
-            {
-                LogDebug($"Error getting config file path: {ex.Message}");
-                throw;
-            }
-        }
-
-        private DirectoryInfo GetParentDirectory(string directoryPath, string directoryName)
-        {
-            var parentDirectory = Directory.GetParent(directoryPath);
-            return parentDirectory ?? throw new InvalidOperationException($"{directoryName} parent is null");
-        }
-
-        private void ParseConfigFile(string filePath)
-        {
-            LogDebug("Parsing configuration file...");
-            var lines = File.ReadAllLines(filePath);
-            bool insideServerBlock = false;
-
-            foreach (var line in lines)
-            {
-                if (line.Trim().StartsWith("\"Server\""))
-                {
-                    insideServerBlock = true;
-                    continue;
-                }
-
-                if (insideServerBlock && line.Contains('}'))
-                {
-                    insideServerBlock = false;
-                    continue;
-                }
-
-                if (insideServerBlock)
-                {
-                    ProcessConfigLine(line);
-                }
-            }
-            LogDebug("Configuration file parsed successfully.");
-        }
-
-        private void ProcessConfigLine(string line)
-        {
-            var match = ConfigLineRegex().Match(line);
-            if (!match.Success || match.Groups.Count != 3) return;
-
-            var key = match.Groups[1].Value.Trim();
-            var value = match.Groups[2].Value.Trim();
-
-            switch (key)
-            {
-                case "server_info":
-                    Server = value;
-                    break;
-                case "password":
-                    Password = value;
-                    break;
-                case "url":
-                    Url = value;
-                    break;
-                case "debug_mode":
-                    isDebugMode = value.ToLower() == "true";
-                    break;
-                case "statistic_type":
-                    if (int.TryParse(value, out int type)) statisticType = type;
-                    break;
-            }
-            LogDebug($"Parsed key: {key}, value: {value}");
         }
 
         private string GetIP()
