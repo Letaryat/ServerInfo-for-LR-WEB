@@ -63,7 +63,8 @@ namespace ServerInfo
 
         public override void Load(bool hotReload)
         {
-            RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+            //RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
+            //RegisterEventHandler<EventCsWinPanelMatch>(OnMapEnd);
             GetIP();
             AddServerInfoCommands();
             RegisterClientAuthListener();
@@ -420,6 +421,13 @@ namespace ServerInfo
             return HookResult.Continue;
         }
 
+        [GameEventHandler]
+        public HookResult OnMatchEndEvent(EventCsWinPanelMatch @event, GameEventInfo info)
+        {
+            rankCache.Clear();
+            
+            return HookResult.Continue;
+        }
         [GameEventHandler]
         public HookResult OnPlayerConnect(EventPlayerConnectFull @event, GameEventInfo info)
         {
