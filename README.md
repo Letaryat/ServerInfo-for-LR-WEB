@@ -39,6 +39,7 @@ Since I don't know what I am doing here and just made rookie stuff mostly copyin
 
 ## Website module:
 - Download module from Stellar Team discord,
+- Alternatively you can found modified version of this module for CS2 on my [discord server](https://discord.gg/jyVxjwYgh9)
 - Install it like any other module,
 - Go to /forward/js_controller.php and change password on the line 5 ($password == "some russian stuff (change to the password you have given in plugin config)")
 - If in module folder, folder named "servers" is absent, create one,
