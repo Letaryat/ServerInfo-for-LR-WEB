@@ -184,7 +184,14 @@ namespace ServerInfo
 
             try
             {
-                int rank = await ExecuteRankQueryAsync(steamid, dbConfig);
+                int rank;
+                if(statisticType == 4) {
+                    rank = await ExecuteRankQueryAForSharpTimer(steamid, dbConfig);
+                }
+                else{
+                    rank = await ExecuteRankQueryAsync(steamid, dbConfig);
+                }
+                 
                 if (steamid != null)
                 {
                     rankCache[steamid] = rank;
@@ -198,6 +205,28 @@ namespace ServerInfo
             }
         }
 
+        private async Task<int> ExecuteRankQueryAForSharpTimer(string? steamid, DbConfig dbConfig)
+        {
+            var connectionString = BuildConnectionString(dbConfig);
+            using var connection = new MySqlConnection(connectionString);
+            await connection.OpenAsync();
+            LogDebug("Sharptimer Rank:" + steamid);
+            var query = $"SELECT GlobalPoints FROM `PlayerStats` WHERE SteamID = @SteamId";;
+
+            //var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamId";
+            using var command = new MySqlCommand(query, connection);
+            command.Parameters.AddWithValue("@SteamId", steamid);
+            var result = await command.ExecuteScalarAsync();
+
+            if (result != null)
+            {
+                LogDebug("Rank fetched successfully (SharpTimer): " + result);
+                return Convert.ToInt32(result);
+            }
+
+            return 0;
+        }
+
         private async Task<int> ExecuteRankQueryAsync(string? steamid, DbConfig dbConfig)
         {
             var connectionString = BuildConnectionString(dbConfig);
@@ -205,6 +234,14 @@ namespace ServerInfo
             await connection.OpenAsync();
 
             var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamId";
+
+            if(statisticType == 4)
+            {
+                LogDebug("Statistic 4" + steamid);
+                query = $"SELECT GlobalPoints FROM `PlayerStats` WHERE SteamID = @SteamId";
+            }
+
+            //var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamId";
             using var command = new MySqlCommand(query, connection);
             command.Parameters.AddWithValue("@SteamId", steamid);
             var result = await command.ExecuteScalarAsync();
@@ -252,6 +289,8 @@ namespace ServerInfo
                     return LoadDbConfigForType2(GetConfigFilePathForType(2));
                 case 3:
                     return LoadDbConfigForType3(GetConfigFilePathForType(3));
+                case 4:
+                    return LoadDbConfigForType4(GetConfigFilePathForType(4));
                 default:
                     LogDebug("Unknown statistic type: " + statisticType);
                     return null;
@@ -396,6 +435,52 @@ namespace ServerInfo
             }
         }
 
+        private DbConfig? LoadDbConfigForType4(string configFilePath)
+        {
+            if (!File.Exists(configFilePath))
+            {
+                LogDebug("Dbconfig for type 4 (SharpTimer) not found at: " + configFilePath);
+                return null;
+            }
+
+            try
+            {
+                LogDebug("Loading dbconfig for type 4 (SharpTimer) from: " + configFilePath);
+                var configJson = File.ReadAllText(configFilePath);
+                var configObject = JsonConvert.DeserializeObject<JObject>(configJson);
+
+                if (configObject == null)
+                {
+                    LogDebug("Failed to deserialize JSON for dbconfig type 2.");
+                    return null;
+                }
+
+                //var connectionConfig = configObject["Connection"];
+                var tableName = "PlayerStats";
+
+                if (configObject["Host"] == null)
+                {
+                    LogDebug("Host is missing in database type 4.");
+                    return null;
+                }
+
+                return new DbConfig
+                {
+                    DbHost = configObject["Host"]?.ToString(),
+                    DbUser = configObject["Username"]?.ToString(),
+                    DbPassword = configObject["Password"]?.ToString(),
+                    DbName = configObject["Database"]?.ToString(),
+                    DbPort = configObject["Port"]?.ToString(),
+                    Name = tableName
+                };
+            }
+            catch (Exception ex)
+            {
+                LogDebug($"Error loading dbconfig for type 4 from {configFilePath}: {ex.Message}");
+                return null;
+            }
+        }
+
         private string GetConfigFilePathForType(int type)
         {
             var parentDirectory = Directory.GetParent(ModuleDirectory)?.Parent?.FullName ?? "";
@@ -406,6 +491,7 @@ namespace ServerInfo
                 1 => Path.Combine(parentDirectory, "plugins/RanksPoints/dbconfig.json"),
                 2 => Path.Combine(parentDirectory, "configs/plugins/RanksCore/ranks.json"),
                 3 => Path.Combine(csgoDirectory, "addons/configs/databases.cfg"),
+                4 => Path.Combine(csgoDirectory, "csgo/cfg/SharpTimer/mysqlConfig.json"),
                 _ => "",
             };
         }
@@ -584,7 +670,7 @@ namespace ServerInfo
             {
                 LogDebug("No players on the server. Skipping team score retrieval and data send.");
                 (scoreCt, scoreT) = GetTeamsScore();
-                var jsonDataEmpty = new { score_ct = scoreCt, score_t = scoreT, players = playersJson ?? new List<object>() };
+                var jsonDataEmpty = new { type = statisticType, score_ct = scoreCt, score_t = scoreT, players = playersJson ?? new List<object>() };
                 var jsonEmptyString = System.Text.Json.JsonSerializer.Serialize(jsonDataEmpty);
                 await PostData(jsonEmptyString);
                 LogDebug("Data send when server is empty: " + jsonEmptyString);
@@ -601,7 +687,7 @@ namespace ServerInfo
 
             resetEvent.WaitOne();
 
-            var jsonData = new { score_ct = scoreCt, score_t = scoreT, players = playersJson ?? new List<object>() };
+            var jsonData = new { type = statisticType, score_ct = scoreCt, score_t = scoreT, players = playersJson ?? new List<object>() };
             var jsonString = System.Text.Json.JsonSerializer.Serialize(jsonData);
 
             await PostData(jsonString);
@@ -611,7 +697,14 @@ namespace ServerInfo
         private List<object> GetPlayersJson(PlayerInfo playerinfo)
         {
             var playTime = CalculatePlayTime(playerinfo);
-            int rank = GetRankFromDatabaseAsync(playerinfo.SteamId2).Result;
+            int rank;
+            if(statisticType == 4){
+                rank = GetRankFromDatabaseAsync(playerinfo.SteamId).Result;
+            }
+            else{
+                rank = GetRankFromDatabaseAsync(playerinfo.SteamId2).Result;
+            }
+            
             var playerJson = new
             {
                 name = playerinfo.Name ?? "Unknown",
