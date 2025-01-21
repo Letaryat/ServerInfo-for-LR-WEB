@@ -10,6 +10,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
+using CounterStrikeSharp.API.Modules.Commands;
 
 namespace ServerInfo
 {
@@ -26,8 +27,8 @@ namespace ServerInfo
     public partial class ServerInfo : BasePlugin, IPluginConfig<ServerInfoConfig>
     {
         public override string ModuleName => "ServerInfo for LR WEB";
-        public override string ModuleAuthor => "E!N // Little edit: Letaryat";
-        public override string ModuleVersion => "1.6";
+        public override string ModuleAuthor => "E!N // Edit: Letaryat";
+        public override string ModuleVersion => "1.6.4";
         public override string ModuleDescription => "Server side plugin for Module Monitoring Rich (Invite does not work but probably it was Stellar Team)";
 
         public ServerInfoConfig Config { get; set; }
@@ -51,26 +52,39 @@ namespace ServerInfo
         private readonly Dictionary<string, int> rankCache = new();
         public Dictionary<int, PlayerInfo> PlayerList { get; private set; } = new Dictionary<int, PlayerInfo>();
 
-    public void OnConfigParsed(ServerInfoConfig config)
-    {
-        Server = config.server_info;
-        Password = config.password;
-        Url = config.url;
-        statisticType = config.statistic_type;
-        isDebugMode = config.debug_mode;
+        public void OnConfigParsed(ServerInfoConfig config)
+        {
+            Server = config.server_info;
+            Password = config.password;
+            Url = config.url;
+            statisticType = config.statistic_type;
+            isDebugMode = config.debug_mode;
 
-    }
+        }
 
         public override void Load(bool hotReload)
         {
-            RegisterListener<Listeners.OnMapEnd>(OnMapEnd);
-            //RegisterEventHandler<EventCsWinPanelMatch>(OnMapEnd);
+            //RegisterListener<Listeners.OnMapEnd>(ClearPlayerCache);
+            //RegisterEventHandler<EventCsWinPanelMatch>(ClearPlayerCache);
+
+            //Clear player cache when changing map:
+            AddCommandListener("changelevel", ClearPlayerCache, HookMode.Pre);
+            AddCommandListener("map", ClearPlayerCache, HookMode.Pre);
+            AddCommandListener("host_workshop_map", ClearPlayerCache, HookMode.Pre);
+            AddCommandListener("ds_workshop_changelevel", ClearPlayerCache, HookMode.Pre);
+
             GetIP();
             AddServerInfoCommands();
             RegisterClientAuthListener();
         }
 
-        private void OnMapEnd()
+        private HookResult ClearPlayerCache(CCSPlayerController? player, CommandInfo commandInfo)
+        {
+            rankCache.Clear();
+            return HookResult.Continue;
+        }
+
+        private void ClearPlayerCache()
         {
             rankCache.Clear();
         }
@@ -185,13 +199,15 @@ namespace ServerInfo
             try
             {
                 int rank;
-                if(statisticType == 4) {
+                if (statisticType == 4)
+                {
                     rank = await ExecuteRankQueryAForSharpTimer(steamid, dbConfig);
                 }
-                else{
+                else
+                {
                     rank = await ExecuteRankQueryAsync(steamid, dbConfig);
                 }
-                 
+
                 if (steamid != null)
                 {
                     rankCache[steamid] = rank;
@@ -211,7 +227,7 @@ namespace ServerInfo
             using var connection = new MySqlConnection(connectionString);
             await connection.OpenAsync();
             LogDebug("Sharptimer Rank:" + steamid);
-            var query = $"SELECT GlobalPoints FROM `PlayerStats` WHERE SteamID = @SteamId";;
+            var query = $"SELECT GlobalPoints FROM `PlayerStats` WHERE SteamID = @SteamId"; ;
 
             //var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamId";
             using var command = new MySqlCommand(query, connection);
@@ -235,7 +251,7 @@ namespace ServerInfo
 
             var query = $"SELECT rank FROM {dbConfig.Name} WHERE steam = @SteamId";
 
-            if(statisticType == 4)
+            if (statisticType == 4)
             {
                 LogDebug("Statistic 4" + steamid);
                 query = $"SELECT GlobalPoints FROM `PlayerStats` WHERE SteamID = @SteamId";
@@ -511,7 +527,7 @@ namespace ServerInfo
         public HookResult OnMatchEndEvent(EventCsWinPanelMatch @event, GameEventInfo info)
         {
             rankCache.Clear();
-            
+
             return HookResult.Continue;
         }
         [GameEventHandler]
@@ -698,13 +714,15 @@ namespace ServerInfo
         {
             var playTime = CalculatePlayTime(playerinfo);
             int rank;
-            if(statisticType == 4){
+            if (statisticType == 4)
+            {
                 rank = GetRankFromDatabaseAsync(playerinfo.SteamId).Result;
             }
-            else{
+            else
+            {
                 rank = GetRankFromDatabaseAsync(playerinfo.SteamId2).Result;
             }
-            
+
             var playerJson = new
             {
                 name = playerinfo.Name ?? "Unknown",
